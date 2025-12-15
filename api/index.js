@@ -3,9 +3,9 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
-// 👇 استدعاء الملفات (لازم يكونوا موجودين هنا)
+// استدعاء الملفات (تأكد إن المسارات صحيحة بالنسبة لمكان الملف الحالي)
 const authRoutes = require('./routes/authRoutes');
-const contentRoutes = require('./routes/contentRoutes'); // 👈 ده السطر اللي كان ناقص!
+const contentRoutes = require('./routes/contentRoutes');
 
 dotenv.config();
 const app = express();
@@ -17,22 +17,33 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// الاتصال بقاعدة البيانات
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB Atlas'))
-  .catch((err) => console.log('❌ MongoDB Connection Error:', err));
+// 👇 سر الخلطة: اتصال قاعدة بيانات مخصص لـ Vercel
+let isConnected = false;
 
-app.get('/', (req, res) => {
-    res.send("<h1>Server is Running</h1>");
+const connectToDatabase = async () => {
+  if (isConnected) {
+    console.log('=> using existing database connection');
+    return;
+  }
+  console.log('=> using new database connection');
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    isConnected = true;
+  } catch (error) {
+    console.log('=> error connecting to database:', error);
+  }
+};
+
+// تشغيل الاتصال قبل أي طلب
+app.use(async (req, res, next) => {
+  await connectToDatabase();
+  next();
 });
 
-// 👇 تشغيل الطرق (Routes)
+// الطرق (Routes)
+app.get('/api', (req, res) => res.send("SmartEdu Server is Running 🚀")); // صفحة اختبار
 app.use('/api/auth', authRoutes);
-app.use('/api/content', contentRoutes); // استخدام الملفات هنا
+app.use('/api/content', contentRoutes);
 
-const PORT = process.env.PORT || 5000;
-
-    console.log(`Server running on port ${PORT}`);
-});
-
+// 👇 تصدير التطبيق عشان فيرسل يشغله (بدون app.listen)
 module.exports = app;
