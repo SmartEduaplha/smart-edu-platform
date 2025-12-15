@@ -2,10 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const path = require('path'); // 👈 ضيف دي
 
-// استدعاء الملفات (تأكد إن المسارات صحيحة بالنسبة لمكان الملف الحالي)
-const authRoutes = require('./routes/authRoutes');
-const contentRoutes = require('./routes/contentRoutes');
+// 👇 غير طريقة الاستدعاء دي عشان تضمن إنه يشوف الفولدر
+const authRoutes = require(path.join(__dirname, 'routes', 'authRoutes'));
+const contentRoutes = require(path.join(__dirname, 'routes', 'contentRoutes'));
 
 dotenv.config();
 const app = express();
